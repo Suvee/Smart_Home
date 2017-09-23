@@ -516,6 +516,7 @@
 		};
 	};
 
+
 	fixed-rate-clocks {
 		xxti {
 			compatible = "samsung,clock-xxti";
@@ -590,20 +591,34 @@ usbphy: usbphy@125B0000 {
 		};
 
 
-		i2c@138B0000 {
-			samsung,i2c-sda-delay = <100>;
-			samsung,i2c-max-bus-freq = <20000>;
-			pinctrl-names = "default";
-			pinctrl-0 = <&i2c5_bus>;
-			status = "okay";
-
-			mpu6050@68 {
-				compatible = "invensense, mpu6050";
-				reg = <0x68>;
-			};
-		};
-
 };
 
 
+&i2c_5{
+	samsung,i2c-sda-delay = <100>;
+	samsung,i2c-max-bus-freq = <20000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c5_bus>;
+	status = "okay";
+
+	mpu6050@68 {
+		compatible = "invensense,mpu6050";
+		reg = <0x68>;
+	};
+};
+
+&i2c_3{
+	samsung,i2c-sda-delay = <100>;
+	samsung,i2c-max-bus-freq = <20000>;
+	pinctrl-0 = <&i2c3_bus>;
+	pinctrl-names = "default";
+	status = "okay";
+
+	gt818@5d {
+		compatible = "ts-gt818";
+		reg = <0x5d>;
+		interrupt-parent = <&gpx0>;
+		interrupts = <4 2>;
+	};
+};
 

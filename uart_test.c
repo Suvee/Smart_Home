@@ -6,9 +6,15 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <strings.h>
 #include <termios.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
+
+#define NUM 10
+char rxbuf[NUM];
+char recv_buf[128];
+
 void serial_init(int fd)
 {
 	struct termios options;//termios数族提供一个常规的终端接口，用于控制非同步通信端口。
@@ -33,13 +39,58 @@ void serial_init(int fd)
 	printf("init gprs over...\n");
 	return ;
 }
+
+float gas_trans(int t)
+{
+	return ((float)t / 4096 * 100);
+}
+
+void serial_data_handle(void)
+{
+	const char *p = recv_buf;
+	char temperature[2] = {0};
+	char humidity[2] = {0};
+	char gas[2] = {0};
+
+	int i;
+
+	for (i = 0; i < NUM; i ++) {
+		switch (p[i])
+		{
+		case 'g':
+			gas[0] = p[i+1]; 	//high 8 bits
+			gas[1] = p[i+2];  //low 8 bits
+			break;
+		case 't':
+			temperature[0] = p[i+1];
+			temperature[1] = p[i+2];
+			break;
+		case 'h':
+			humidity[0] = p[i+1];
+			humidity[2] = p[i+2];
+			break;
+		case 's':
+			bzero(recv_buf, sizeof (recv_buf));
+			break;
+		default:
+			break;
+		}
+	}
+
+	printf("gas:%f%%, temp:%d.%d, humi:%d.%d\n", 
+			gas_trans((gas[0]<<8)|gas[1]),
+			temperature[0], temperature[1],
+			humidity[0], humidity[1]);
+
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 
 	int ret;
-	char recv_buf[128];
 	int dev_uart_fd;
-	//char c = '1';
+	char c[2] = {0xf1, 0xf0};
 #if 1
 	if ((dev_uart_fd = open ("/dev/ttyUSB0", O_RDWR)) < 0)
 	{
@@ -57,12 +108,12 @@ int main(int argc, char *argv[])
 		sleep(1);
 		memset (recv_buf, 0, sizeof (recv_buf));
 
-		//write (dev_uart_fd, &c, 1);			
-
+		//write (dev_uart_fd, &c[1], 1);			
 		ret = read (dev_uart_fd,recv_buf, sizeof(recv_buf));	
 		if(ret > 0)
 		{
-			printf("recv_buf=%s\n",recv_buf);		
+			//printf("recv_buf=%s\n",recv_buf);		
+			serial_data_handle();
 		}
 	}
 	close(dev_uart_fd);
