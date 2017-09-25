@@ -3,15 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <strings.h>
 #include "shm_common.h"
-
-static char rxbuf[SIZE];
-static char recv_buf[128];
-
-static serial_init(int fd);
-static float gas_trans(int t);
-static void serial_data_handle(void);
 
 int main(int argc, const char *argv[])
 {
@@ -21,7 +13,7 @@ int main(int argc, const char *argv[])
 
 	signal(SIGUSR1, signal_handle);
 	
-	key_t key = ftok("/", 130);
+	key_t key = ftok("/", 'a');
 	if (-1 == key) {
 		perror("fail to ftok\n");
 		strerror(errno);
@@ -54,27 +46,25 @@ int main(int argc, const char *argv[])
 		pause();
 	}
 
-	int rd_byte = 0;
+	int wr_byte = 0;
 
 	while(1)
 	{
-		bzero(shmaddr->buf, sizeof (shmaddr->buf));
-		rd_byte = read(0, shmaddr->buf, sizeof (shmaddr->buf));
-		if (-1 == rd_byte) { 			//error situation
+		pause();
+
+		wr_byte = write(1, shmaddr->buf, sizeof (shmaddr->buf));
+		if (-1 == wr_byte) { 			//error situation
 			perror("fail to read\n");
 			strerror(errno);
 			return -1;
-		} else if (1 == rd_byte) {//end-of-file
+		} else if (!strncmp("\n", shmaddr->buf, 1)) {//end-of-file
 			printf("end-of-file\n");
-			kill(peer_id, SIGUSR1);
 			break;
 		} else { 						//normal
 			peer_id = shmaddr->pid;
 			shmaddr->pid = getpid();
 			kill(peer_id, SIGUSR1);
 		}
-
-		pause();
 	}
 
 	shmdt(shmaddr);
