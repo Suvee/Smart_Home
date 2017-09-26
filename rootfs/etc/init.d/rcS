@@ -1,5 +1,0 @@
-#!/bin/sh
-# This is the first script called by init process
-/bin/mount  -a
-echo  /sbin/mdev  >  /proc/sys/kernel/hotplug
-/sbin/mdev  -s

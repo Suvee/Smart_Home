@@ -75,7 +75,7 @@ static void serial_init(int fd)
 	return ;
 }
 
-#if 1
+#if 0
 /*
  * Name      : gas_trans()
  * Function  : handle data from STM32, 
