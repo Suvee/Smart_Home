@@ -6,12 +6,11 @@
 #include <strings.h>
 #include "shm_common.h"
 
+void signal_handle(int sig)
+{ /*nothing*/ }
+
 static char rxbuf[SIZE];
 static char recv_buf[128];
-
-static serial_init(int fd);
-static float gas_trans(int t);
-static void serial_data_handle(void);
 
 int main(int argc, const char *argv[])
 {
@@ -21,6 +20,15 @@ int main(int argc, const char *argv[])
 
 	signal(SIGUSR1, signal_handle);
 	
+#if 0
+	if ((fd_serial = open ("/dev/ttyUSB0", O_RDWR)) < 0)
+	{
+		perror ("open ttyUSB");
+		return -1;
+	}
+	printf ("serial_init is ok, open /dev/ttyUSB0 success!\n");
+#endif
+
 	key_t key = ftok("/", 130);
 	if (-1 == key) {
 		perror("fail to ftok\n");
