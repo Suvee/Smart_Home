@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include "shm_common.h"
+#include "fs4412_common.h"
 
 int main(int argc, const char *argv[])
 {

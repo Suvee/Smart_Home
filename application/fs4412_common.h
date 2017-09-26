@@ -16,16 +16,16 @@ typedef struct uart_shm_data {
 	/*read or write flag: 0 to read / 1 to write*/
 	unsigned int flag;
 	/*sensor data*/
-	char temperature[2];
-	char humidity[2];
-	char gas[2];
+	unsigned char temperature[2];
+	unsigned char humidity[2];
+	unsigned char gas[2];
 }uart_data_t;
 
 extern uart_data_t *uart_shm_addr;
 extern int uart_shmid;
 
 /* serial handle pthread function */
-extern void *pth_uart_func(void);
+extern void *pth_uart_func(void *pth);
 
 /* 
  * sig_beep[2]: beep control flag 
@@ -50,7 +50,7 @@ extern music_data_t *music_shm_addr;
 extern int music_shmid;
 
 /* pwm handle pthread function */
-extern void *pth_pwm_func(void);
+extern void *pth_pwm_func(void *pth);
 
 
 #endif

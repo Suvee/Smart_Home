@@ -13,7 +13,7 @@
 #define NUM 9
 
 /*recive STM32 sampling informations */
-static char recv_buff[NUM];
+static unsigned char recv_buff[NUM];
 /*file descriptor on /dev/ttyUSB0 */
 int fd_serial;
 /*share memery address*/
@@ -75,7 +75,7 @@ static void serial_init(int fd)
 	return ;
 }
 
-#if 0
+#if 1
 /*
  * Name      : gas_trans()
  * Function  : handle data from STM32, 
@@ -96,9 +96,11 @@ static float gas_trans(int t)
  * */
 static void serial_data_handle(void)
 {
-	const char *tmp = recv_buff;
+	unsigned char *tmp = recv_buff;
 
 	if ((0xFE==tmp[0]) && (0xEF==tmp[1]) && (0xFF==tmp[8])) {
+		printf("read data ok!\n");
+
 		uart_shm_addr->gas[0] = tmp[2];  //high 8 bits
 		uart_shm_addr->gas[1] = tmp[3];  //low 8 bits
 
@@ -107,23 +109,26 @@ static void serial_data_handle(void)
 
 		uart_shm_addr->humidity[0] = tmp[6];
 		uart_shm_addr->humidity[1] = tmp[7];
+
+		/*set flag to wait Qt read*/
+		uart_shm_addr->flag = 1; //wait Qt read
 	} 
 
 #if 0
 	printf("gas:%.2f%%, temp:%d.%d, humi:%d.%d\n", 
-			gas_trans((gas[0]<<8)|gas[1]),
-			temperature[0], temperature[1],
-			humidity[0], humidity[1]);
+			gas_trans((uart_shm_addr->gas[0]<<8)|uart_shm_addr->gas[1]),
+			uart_shm_addr->temperature[0], uart_shm_addr->temperature[1],
+			uart_shm_addr->humidity[0], uart_shm_addr->humidity[1]);
 #endif
 
 	return ;
 }
 
-void *pth_uart_func(void)
+void *pth_uart_func(void *pth)
 {
 	char *errmsg;
 
-	serial_init (fd_serial);
+	serial_init(fd_serial);
 
 	/****************** share memery create *******************/
 	key_t key = ftok("/", 130);
@@ -136,14 +141,14 @@ void *pth_uart_func(void)
 	if (-1 == uart_shmid) {
 		if (EEXIST == errno) {
 			uart_shmid = shmget(key, sizeof (uart_data_t), 0666);
-			uart_shm_addr = shmat(uart_shmid, NULL, 0);
+			uart_shm_addr = (uart_data_t *)shmat(uart_shmid, NULL, 0);
 			uart_shm_addr->flag = 0; //sign to read
 		} else {
 			errmsg = strerror(errno);
 			return errmsg;
 		}
 	} else {
-		uart_shm_addr = shmat(uart_shmid, NULL, 0);
+		uart_shm_addr = (uart_data_t *)shmat(uart_shmid, NULL, 0);
 		if ((void *)-1 == uart_shm_addr) {
 			errmsg = strerror(errno);
 			return errmsg;
@@ -158,16 +163,18 @@ void *pth_uart_func(void)
 		bzero(recv_buff, sizeof (recv_buff));
 
 		if (0 == uart_shm_addr->flag) {
-			if (0 < read(fd_serial, recv_buff, sizeof (recv_buff)))
+			if (0 < read(fd_serial, recv_buff, sizeof (recv_buff))) {
 				serial_data_handle();
+			}
 		}
 
 		if (0x0950 < ((uart_shm_addr->gas[0]<<8) | uart_shm_addr->gas[1]))
 			write (fd_serial, &sig_beep[0], 1);			
 
-		uart_shm_addr->flag = 1; //wait Qt read
+		usleep(200000);
 
-		sleep(1);
+		if (2 == uart_shm_addr->flag)
+			break; //shutdown
 	}
 
 	shmdt(uart_shm_addr);

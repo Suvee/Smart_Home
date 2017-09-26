@@ -75,7 +75,7 @@ static void play_music(int num)
  * Parameter : void
  * Return    : error messages
  * */
-void *pth_pwm_func(void)
+void *pth_pwm_func(void *pth)
 {
 	char *errmsg;
 
@@ -118,10 +118,4 @@ void *pth_pwm_func(void)
 	}
 
 	pthread_exit(NULL);
-}
-
-int main(int argc, const char *argv[])
-{
-	
-	return 0;
 }
