@@ -4,23 +4,25 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <stdio.h>
 #include <pthread.h>
 
 #define SIZE 10
-void signal_handle(int sig);
-
-typedef char data_t;
-typedef struct shm_data {
-	int flag;
-	pid_t pid;
-	data_t buf[SIZE];
-}shm_data_t;
 
 /************************** pth_uart.c ******************************/
 extern int fd_serial;
-extern char temperature[2];
-extern char humidity[2];
-extern char gas[2];
+
+typedef struct uart_shm_data {
+	/*read or write flag: 0 to read / 1 to write*/
+	unsigned int flag;
+	/*sensor data*/
+	char temperature[2];
+	char humidity[2];
+	char gas[2];
+}uart_data_t;
+
+extern uart_data_t *uart_shm_addr;
+extern int uart_shmid;
 
 /* serial handle pthread function */
 extern void *pth_uart_func(void);
@@ -31,16 +33,24 @@ extern void *pth_uart_func(void);
  * write (fd_serial, &sig_beep[0], 1);			
  * write (fd_serial, &sig_beep[1], 1);			
  **/
-char sig_beep[2] = {0xf1, 0xf0};
+extern char sig_beep[2];
 /**************************** end ***********************************/
 
 /************************** pth_pwm.c *******************************/
 extern int fd_pwm;
 
+typedef struct music_shm_data {
+	/*read or write flag: 0 to read / 1 to write*/
+	unsigned int flag;
+	/*which song to play*/
+	int num;
+}music_data_t;
+
+extern music_data_t *music_shm_addr;
+extern int music_shmid;
+
 /* pwm handle pthread function */
 extern void *pth_pwm_func(void);
-
-
 
 
 #endif
