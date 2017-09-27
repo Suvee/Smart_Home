@@ -80,7 +80,7 @@ void *pth_pwm_func(void *pth)
 	char *errmsg;
 
 	/****************** share memery create *******************/
-	key_t key = ftok("/", 128);
+	key_t key = ftok("/", 127);
 	if (-1 == key) {
 		errmsg = strerror(errno);
 		return errmsg;
